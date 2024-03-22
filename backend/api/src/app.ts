@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import * as lb from '@google-cloud/logging-bunyan';
 import {HealthCheckRouter} from './health-check';
 import {config} from './config';
+import {errorHandler} from './error-handler';
 
 async function createApp() {
   const {logger, mw} = await lb.express.middleware({
@@ -31,6 +32,18 @@ async function createApp() {
   app.use(express.json());
 
   app.use('/healthz', healthCheckRouter);
+
+  app.use(
+    async (
+      err: Error,
+      req: express.Request,
+      res: express.Response,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _next: express.NextFunction
+    ) => {
+      await errorHandler.handleError(err, req, res);
+    }
+  );
 
   return {app, logger};
 }
