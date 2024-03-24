@@ -1,7 +1,8 @@
 import {Request, Response} from 'express';
 import {isCelebrateError} from 'celebrate';
 import {StatusCodes} from 'http-status-codes';
-import {AlreadyExistsError, NotFoundError, UnauthorizedError} from '../errors';
+import {AlreadyExistsError, NotFoundError} from '../errors';
+import {UnauthorizedError} from 'express-oauth2-jwt-bearer';
 
 class ErrorResponse {
   public readonly code: ErrorCode;

@@ -3,11 +3,14 @@ import {Joi, Segments, celebrate} from 'celebrate';
 import {WantsRouterArgs} from './wants-router-args';
 import {StatusCodes} from 'http-status-codes';
 import {WantVisibility} from '../../models';
+import {UnauthorizedError} from 'express-oauth2-jwt-bearer';
 
 class WantsRouter {
+  private readonly checkJwt;
   private readonly wantsService;
 
   constructor(args: WantsRouterArgs) {
+    this.checkJwt = args.checkJwt;
     this.wantsService = args.wantsService;
   }
 
@@ -16,6 +19,7 @@ class WantsRouter {
 
     router.post(
       '/',
+      this.checkJwt,
       celebrate({
         [Segments.BODY]: Joi.object()
           .keys({
@@ -29,8 +33,14 @@ class WantsRouter {
       }),
       async (req, res, next) => {
         try {
+          const creatorId = req.auth?.payload.sub;
+
+          if (!creatorId) {
+            throw new UnauthorizedError('creatorId not found');
+          }
+
           const want = await this.wantsService.createWant({
-            creatorId: 'google-oauth2|117522282924808798071',
+            creatorId,
             title: req.body.title,
             description: req.body.description,
             visibility: req.body.visibility,

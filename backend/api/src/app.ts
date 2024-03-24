@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import * as lb from '@google-cloud/logging-bunyan';
 import {ManagementClient} from 'auth0';
+import {auth} from 'express-oauth2-jwt-bearer';
 import {db} from './db';
 import {HealthCheckRouter} from './health-check';
 import {UsersService} from './users';
@@ -42,9 +43,15 @@ async function createApp() {
     logger,
   });
 
+  const checkJwt = auth({
+    audience: config.auth0.apiIdentifier,
+    issuerBaseURL: `https://${config.auth0.domain}`,
+  });
+
   const healthCheckRouter = new HealthCheckRouter().router;
 
   const wantsRouter = new WantsRouter({
+    checkJwt,
     wantsService,
   }).router;
 

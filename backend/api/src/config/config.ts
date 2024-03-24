@@ -2,6 +2,7 @@ import {Joi} from 'celebrate';
 
 const envVarsSchema = Joi.object()
   .keys({
+    AUTH0_API_IDENTIFIER: Joi.string().uri().required(),
     AUTH0_CLIENT_ID: Joi.string().required(),
     AUTH0_CLIENT_SECRET: Joi.string().required(),
     AUTH0_DOMAIN: Joi.string().required(),
@@ -26,6 +27,7 @@ if (error) {
 
 const config = {
   auth0: {
+    apiIdentifier: envVars.AUTH0_API_IDENTIFIER,
     clientId: envVars.AUTH0_CLIENT_ID,
     clientSecret: envVars.AUTH0_CLIENT_SECRET,
     domain: envVars.AUTH0_DOMAIN,
