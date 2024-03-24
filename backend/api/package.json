@@ -17,6 +17,12 @@
     "compile": "tsc",
     "fix": "gts fix",
     "dev": "ts-node-dev -r dotenv/config src/index.ts",
+    "up:postgres": "docker compose up postgres --wait --detach",
+    "up:postgres:clean": "npm run down && rm -rf postgres-data && npm run up:postgres",
+    "down": "docker compose down",
+    "knex:migrate:make": "node scripts/knex-migrate-make",
+    "knex:migrate:latest": "knex migrate:latest",
+    "knex:migrate:rollback": "knex migrate:rollback",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
     "posttest": "npm run lint"
@@ -33,11 +39,15 @@
   },
   "dependencies": {
     "@google-cloud/logging-bunyan": "^5.0.1",
+    "auth0": "^4.3.1",
     "bunyan": "^1.8.15",
     "celebrate": "^15.0.3",
     "cors": "^2.8.5",
     "express": "^4.19.1",
     "helmet": "^7.1.0",
-    "http-status-codes": "^2.3.0"
+    "http-status-codes": "^2.3.0",
+    "knex": "^3.1.0",
+    "knex-stringcase": "^1.4.6",
+    "pg": "^8.11.3"
   }
 }

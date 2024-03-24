@@ -2,11 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import * as lb from '@google-cloud/logging-bunyan';
+import {ManagementClient} from 'auth0';
+import {db} from './db';
 import {HealthCheckRouter} from './health-check';
-import {config} from './config';
+import {UsersService} from './users';
 import {errorHandler} from './error-handler';
+import {config} from './config';
+import {WantsRouter, WantsService} from './wants';
 
 async function createApp() {
+  await db.migrate.latest();
+
   const {logger, mw} = await lb.express.middleware({
     level: config.logLevel,
     logName: config.service.name,
@@ -19,7 +25,28 @@ async function createApp() {
     skipParentEntryForCloudRun: true,
   });
 
+  const auth0ManagementClient = new ManagementClient({
+    domain: config.auth0.domain,
+    clientId: config.auth0.clientId,
+    clientSecret: config.auth0.clientSecret,
+  });
+
+  const usersService = new UsersService({
+    auth0ManagementClient,
+    logger,
+  });
+
+  const wantsService = new WantsService({
+    db,
+    usersService,
+    logger,
+  });
+
   const healthCheckRouter = new HealthCheckRouter().router;
+
+  const wantsRouter = new WantsRouter({
+    wantsService,
+  }).router;
 
   const app = express();
 
@@ -32,6 +59,8 @@ async function createApp() {
   app.use(express.json());
 
   app.use('/healthz', healthCheckRouter);
+
+  app.use('/wants', wantsRouter);
 
   app.use(
     async (
