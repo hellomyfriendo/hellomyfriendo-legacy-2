@@ -1,6 +1,6 @@
 import {StatusCodes} from 'http-status-codes';
 import {User} from '../../models';
-import {UsersServiceArgs} from './users-service-args';
+import {UsersServiceArgs} from './interfaces/users-service-args';
 import {ManagementApiError} from 'auth0';
 
 class UsersService {

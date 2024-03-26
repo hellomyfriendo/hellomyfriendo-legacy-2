@@ -7,6 +7,7 @@ const envVarsSchema = Joi.object()
     AUTH0_CLIENT_SECRET: Joi.string().required(),
     AUTH0_DOMAIN: Joi.string().required(),
     GOOGLE_CLOUD_PROJECT_ID: Joi.string().required(),
+    GOOGLE_MAPS_API_KEY: Joi.string().required(),
     K_REVISION: Joi.string().required(),
     K_SERVICE: Joi.string().required(),
     LOG_LEVEL: Joi.string().valid('debug', 'info').default('info'),
@@ -32,9 +33,14 @@ const config = {
     clientSecret: envVars.AUTH0_CLIENT_SECRET,
     domain: envVars.AUTH0_DOMAIN,
   },
-  googleCloud: {
-    project: {
-      id: envVars.GOOGLE_CLOUD_PROJECT_ID,
+  google: {
+    maps: {
+      apiKey: envVars.GOOGLE_MAPS_API_KEY,
+    },
+    cloud: {
+      project: {
+        id: envVars.GOOGLE_CLOUD_PROJECT_ID,
+      },
     },
   },
   logLevel: envVars.LOG_LEVEL,

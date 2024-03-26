@@ -1,15 +1,18 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import * as lb from '@google-cloud/logging-bunyan';
 import {ManagementClient} from 'auth0';
 import {auth} from 'express-oauth2-jwt-bearer';
+import * as lb from '@google-cloud/logging-bunyan';
+import {LanguageServiceClient} from '@google-cloud/language';
+import {Client as GoogleMapsServicesClient} from '@googlemaps/google-maps-services-js';
 import {db} from './db';
 import {HealthCheckRouter} from './health-check';
 import {UsersService} from './users';
 import {errorHandler} from './error-handler';
 import {config} from './config';
 import {WantsRouter, WantsService} from './wants';
+import {PlacesService} from './places';
 
 async function createApp() {
   await db.migrate.latest();
@@ -17,7 +20,7 @@ async function createApp() {
   const {logger, mw} = await lb.express.middleware({
     level: config.logLevel,
     logName: config.service.name,
-    projectId: config.googleCloud.project.id,
+    projectId: config.google.cloud.project.id,
     redirectToStdout: true,
     serviceContext: {
       service: config.service.name,
@@ -32,13 +35,36 @@ async function createApp() {
     clientSecret: config.auth0.clientSecret,
   });
 
+  const googleLanguageServiceClient = new LanguageServiceClient({
+    projectId: config.google.cloud.project.id,
+  });
+
+  const googleMapsServiceClient = new GoogleMapsServicesClient();
+
   const usersService = new UsersService({
     auth0ManagementClient,
     logger,
   });
 
+  const placesService = new PlacesService({
+    db,
+    google: {
+      maps: {
+        client: googleMapsServiceClient,
+        apiKey: config.google.maps.apiKey,
+      },
+    },
+    logger,
+  });
+
   const wantsService = new WantsService({
     db,
+    googleCloud: {
+      language: {
+        serviceClient: googleLanguageServiceClient,
+      },
+    },
+    placesService,
     usersService,
     logger,
   });

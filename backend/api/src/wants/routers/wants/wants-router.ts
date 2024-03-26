@@ -1,6 +1,6 @@
 import {Router} from 'express';
 import {Joi, Segments, celebrate} from 'celebrate';
-import {WantsRouterArgs} from './wants-router-args';
+import {WantsRouterArgs} from './interfaces/wants-router-args';
 import {StatusCodes} from 'http-status-codes';
 import {WantVisibility} from '../../models';
 import {UnauthorizedError} from 'express-oauth2-jwt-bearer';
@@ -28,6 +28,8 @@ class WantsRouter {
             visibility: Joi.string()
               .valid(...Object.values(WantVisibility))
               .required(),
+            address: Joi.string(),
+            radiusInMeters: Joi.number().integer(),
           })
           .required(),
       }),
@@ -44,6 +46,8 @@ class WantsRouter {
             title: req.body.title,
             description: req.body.description,
             visibility: req.body.visibility,
+            address: req.body.address,
+            radiusInMeters: req.body.radiusInMeters,
           });
 
           return res.status(StatusCodes.CREATED).json(want);
