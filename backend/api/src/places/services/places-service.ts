@@ -1,7 +1,6 @@
 import {GeocodeResult} from '@googlemaps/google-maps-services-js';
-import {PlacesServiceArgs} from './interfaces/places-service-args';
 import {Place} from '../models';
-import {PlaceRow} from './interfaces/place-row';
+import {PlaceRow, PlacesServiceArgs} from './interfaces';
 
 class PlacesService {
   private readonly db;

@@ -1,7 +1,7 @@
+import {ManagementApiError} from 'auth0';
 import {StatusCodes} from 'http-status-codes';
 import {User} from '../../models';
-import {UsersServiceArgs} from './interfaces/users-service-args';
-import {ManagementApiError} from 'auth0';
+import {UsersServiceArgs} from './interfaces';
 
 class UsersService {
   private readonly auth0ManagementClient;

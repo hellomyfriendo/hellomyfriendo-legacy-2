@@ -1,9 +1,9 @@
 import {Router} from 'express';
+import {UnauthorizedError} from 'express-oauth2-jwt-bearer';
 import {Joi, Segments, celebrate} from 'celebrate';
-import {WantsRouterArgs} from './interfaces/wants-router-args';
 import {StatusCodes} from 'http-status-codes';
 import {WantVisibility} from '../../models';
-import {UnauthorizedError} from 'express-oauth2-jwt-bearer';
+import {WantsRouterArgs} from './interfaces';
 
 class WantsRouter {
   private readonly checkJwt;
@@ -51,6 +51,47 @@ class WantsRouter {
           });
 
           return res.status(StatusCodes.CREATED).json(want);
+        } catch (error) {
+          return next(error);
+        }
+      }
+    );
+
+    router.get(
+      '/feed',
+      celebrate({
+        [Segments.QUERY]: Joi.object().keys({
+          limit: Joi.number().integer().required(),
+          offset: Joi.number().integer().required(),
+          latitude: Joi.number().min(-90).max(90),
+          longitude: Joi.number().min(-180).max(180),
+        }),
+      }),
+      this.checkJwt,
+      async (req, res, next) => {
+        try {
+          const userId = req.auth?.payload.sub;
+
+          if (!userId) {
+            throw new UnauthorizedError('User not found');
+          }
+
+          let location;
+          if (req.query.latitude && req.query.longitude) {
+            location = {
+              latitude: Number.parseFloat(req.query.latitude as string),
+              longitude: Number.parseFloat(req.query.longitude as string),
+            };
+          }
+
+          const feed = await this.wantsService.feedWants({
+            userId: userId as string,
+            location,
+            limit: Number.parseInt(req.query.limit as string),
+            offset: Number.parseInt(req.query.offset as string),
+          });
+
+          return res.json(feed);
         } catch (error) {
           return next(error);
         }

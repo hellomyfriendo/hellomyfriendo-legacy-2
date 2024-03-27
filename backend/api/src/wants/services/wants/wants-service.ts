@@ -1,7 +1,6 @@
 import {NotFoundError} from '../../../errors';
 import {Want} from '../../models';
-import {CreateWantArgs} from './interfaces/create-want-args';
-import {WantsServiceArgs} from './interfaces/wants-service-args';
+import {CreateWantArgs, FeedWantsArgs, WantsServiceArgs} from './interfaces';
 
 class WantsService {
   private readonly db;
@@ -59,6 +58,12 @@ class WantsService {
     this.logger.info({want}, `Want ${want.id} created!`);
 
     return want;
+  }
+
+  async feedWants(args: FeedWantsArgs) {
+    return await this.db<Want>(this.wantsTable)
+      .limit(args.limit)
+      .offset(args.offset);
   }
 
   private async validateWantTitle(title: string) {
