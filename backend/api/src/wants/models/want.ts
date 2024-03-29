@@ -6,8 +6,15 @@ interface Want {
   title: string;
   description?: string;
   visibility: WantVisibility;
-  placeId?: string;
-  radiusInMeters?: number;
+  place: {
+    googlePlaceId: string;
+    formattedAddress: string;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+  radiusInMeters: number;
   createdAt: Date;
   updatedAt: Date;
 }

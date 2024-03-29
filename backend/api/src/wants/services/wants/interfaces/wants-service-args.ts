@@ -1,8 +1,8 @@
 import {Knex} from 'knex';
 import {LanguageServiceClient} from '@google-cloud/language';
+import {Client as GoogleMapsServicesClient} from '@googlemaps/google-maps-services-js';
 import * as lb from '@google-cloud/logging-bunyan';
 import {UsersService} from '../../../../users';
-import {PlacesService} from '../../../../places';
 
 interface WantsServiceArgs {
   db: Knex;
@@ -10,8 +10,11 @@ interface WantsServiceArgs {
     language: {
       serviceClient: LanguageServiceClient;
     };
+    maps: {
+      serviceClient: GoogleMapsServicesClient;
+      apiKey: string;
+    };
   };
-  placesService: PlacesService;
   usersService: UsersService;
   logger: lb.express.Logger;
 }

@@ -38,7 +38,7 @@ class WantsRouter {
           const creatorId = req.auth?.payload.sub;
 
           if (!creatorId) {
-            throw new UnauthorizedError('creatorId not found');
+            throw new UnauthorizedError('Creator authentication is required');
           }
 
           const want = await this.wantsService.createWant({
@@ -73,7 +73,7 @@ class WantsRouter {
           const userId = req.auth?.payload.sub;
 
           if (!userId) {
-            throw new UnauthorizedError('User not found');
+            throw new UnauthorizedError('User authentication is required');
           }
 
           let location;
@@ -84,7 +84,7 @@ class WantsRouter {
             };
           }
 
-          const feed = await this.wantsService.feedWants({
+          const feed = await this.wantsService.wantsFeed({
             userId: userId as string,
             location,
             limit: Number.parseInt(req.query.limit as string),
