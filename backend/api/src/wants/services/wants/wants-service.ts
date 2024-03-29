@@ -1,12 +1,16 @@
+import {GeocodeResult} from '@googlemaps/google-maps-services-js';
 import {NotFoundError} from '../../../errors';
 import {Want} from '../../models';
-import {CreateWantArgs} from './interfaces/create-want-args';
-import {WantsServiceArgs} from './interfaces/wants-service-args';
+import {
+  CreateWantArgs,
+  FeedWantsArgs,
+  WantRow,
+  WantsServiceArgs,
+} from './interfaces';
 
 class WantsService {
   private readonly db;
   private readonly googleCloud;
-  private readonly placesService;
   private readonly usersService;
   private readonly logger;
 
@@ -15,7 +19,6 @@ class WantsService {
   constructor(args: WantsServiceArgs) {
     this.db = args.db;
     this.googleCloud = args.googleCloud;
-    this.placesService = args.placesService;
     this.usersService = args.usersService;
     this.logger = args.logger;
   }
@@ -35,30 +38,50 @@ class WantsService {
       await this.validateWantDescription(args.description);
     }
 
-    let place;
+    const geocodeResult = await this.geocodeAddress(args.address);
 
-    if (args.address) {
-      place = await this.placesService.getOrCreatePlaceByAddress(args.address);
-    }
-
-    const wantInsert = {
+    const wantInsert: Omit<WantRow, 'id' | 'createdAt' | 'updatedAt'> = {
       creatorId: creator.id,
       title: args.title,
       description: args.description,
       visibility: args.visibility,
-      placeId: place?.id,
+      googlePlaceId: geocodeResult.place_id,
+      formattedAddress: geocodeResult.formatted_address,
+      latitude: geocodeResult.geometry.location.lat,
+      longitude: geocodeResult.geometry.location.lng,
       radiusInMeters: args.radiusInMeters,
     };
 
-    this.logger.info({wantInsert}, 'Inserting Want');
+    this.logger.info({wantInsert}, 'Inserting WantRow');
 
-    const [want] = await this.db<Want>(this.wantsTable)
+    const [wantRow] = await this.db<Want>(this.wantsTable)
       .insert(wantInsert)
       .returning('*');
 
-    this.logger.info({want}, `Want ${want.id} created!`);
+    this.logger.info({want: wantRow}, `Want ${wantRow.id} created!`);
 
-    return want;
+    return wantRow;
+  }
+
+  async wantsFeed(args: FeedWantsArgs): Promise<Want[]> {
+    const user = await this.usersService.getUser(args.userId);
+
+    if (!user) {
+      throw new NotFoundError(`User ${args.userId} not found`);
+    }
+
+    const wantRows: WantRow[] = await this.db<WantRow>(this.wantsTable)
+      .modify(async queryBuilder => {
+        if (args.location) {
+          queryBuilder.whereRaw(
+            `ST_DWithin(ST_MakePoint(longitude, latitude)::geography, ST_MakePoint(${args.location.longitude}, ${args.location.latitude})::geography, radius_in_meters)`
+          );
+        }
+      })
+      .limit(args.limit)
+      .offset(args.offset);
+
+    return wantRows.map(this.makeWant);
   }
 
   private async validateWantTitle(title: string) {
@@ -120,6 +143,38 @@ class WantsService {
     }
 
     return;
+  }
+
+  private async geocodeAddress(address: string): Promise<GeocodeResult> {
+    const geocodeResponse = await this.googleCloud.maps.serviceClient.geocode({
+      params: {
+        address,
+        key: this.googleCloud.maps.apiKey,
+      },
+    });
+
+    return geocodeResponse.data.results[0];
+  }
+
+  private makeWant(wantRow: WantRow): Want {
+    return {
+      id: wantRow.id,
+      creatorId: wantRow.creatorId,
+      title: wantRow.title,
+      description: wantRow.description,
+      visibility: wantRow.visibility,
+      place: {
+        googlePlaceId: wantRow.googlePlaceId,
+        formattedAddress: wantRow.formattedAddress,
+        location: {
+          latitude: wantRow.latitude,
+          longitude: wantRow.longitude,
+        },
+      },
+      radiusInMeters: wantRow.radiusInMeters,
+      createdAt: wantRow.createdAt,
+      updatedAt: wantRow.updatedAt,
+    };
   }
 }
 

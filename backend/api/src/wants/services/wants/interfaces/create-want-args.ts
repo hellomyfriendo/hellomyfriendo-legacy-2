@@ -5,8 +5,8 @@ interface CreateWantArgs {
   title: string;
   description?: string;
   visibility: WantVisibility;
-  address?: string;
-  radiusInMeters?: number;
+  address: string;
+  radiusInMeters: number;
 }
 
 export {CreateWantArgs};

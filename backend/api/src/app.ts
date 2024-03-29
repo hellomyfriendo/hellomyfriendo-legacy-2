@@ -12,7 +12,6 @@ import {UsersService} from './users';
 import {errorHandler} from './error-handler';
 import {config} from './config';
 import {WantsRouter, WantsService} from './wants';
-import {PlacesService} from './places';
 
 async function createApp() {
   await db.migrate.latest();
@@ -46,25 +45,17 @@ async function createApp() {
     logger,
   });
 
-  const placesService = new PlacesService({
-    db,
-    google: {
-      maps: {
-        client: googleMapsServiceClient,
-        apiKey: config.google.maps.apiKey,
-      },
-    },
-    logger,
-  });
-
   const wantsService = new WantsService({
     db,
     googleCloud: {
       language: {
         serviceClient: googleLanguageServiceClient,
       },
+      maps: {
+        serviceClient: googleMapsServiceClient,
+        apiKey: config.google.maps.apiKey,
+      },
     },
-    placesService,
     usersService,
     logger,
   });
